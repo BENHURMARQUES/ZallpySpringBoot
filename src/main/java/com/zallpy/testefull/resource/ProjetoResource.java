@@ -5,29 +5,26 @@
  */
 package com.zallpy.testefull.resource;
 
-import java.text.DateFormat;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
-
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.zallpy.testefull.auth.JwtRequest;
 import com.zallpy.testefull.auth.JwtTokenUtil;
 import com.zallpy.testefull.dto.request.GravarHorasRequestDTO;
 import com.zallpy.testefull.dto.response.ProjetoResponseDTO;
@@ -69,38 +66,53 @@ public class ProjetoResource {
 	public ResponseEntity<List<ProjetoResponseDTO>> buscarProjetos(HttpServletRequest request) {
 
 		UsuarioPO usuarioPO = retornarUsuarioPO(request);
-
 		List<ProjetoResponseDTO> lista = new ArrayList<>();
-		List<ProjetoPO> projetos = projetoRepository.buscaMeus(usuarioPO.getUsername());
-		if (projetos != null) {
-			for (ProjetoPO projeto : projetos) {
-				ProjetoResponseDTO responseDTO = new ProjetoResponseDTO();
-				responseDTO.setIdProjeto(projeto.getIdProjeto());
-				responseDTO.setNome(projeto.getNome());
 
-				System.out.println("##################################"+ usuarioPO.getIdUsuario() +" - "+ projeto.getIdProjeto());
-				
-				Double horas = 0.0;
-				List<RegistroHorasProjetoPO> listHoras = registroHorasRepository
-						.buscaMinhasHoras(usuarioPO.getIdUsuario(), projeto.getIdProjeto());
-				if (listHoras.size() > 0) {
-					System.out.println("##################################");
-					for (RegistroHorasProjetoPO registroHoras : listHoras) {
-						horas += registroHoras.getHoras();
+		try {
+			List<ProjetoPO> projetos = projetoRepository.buscaMeus(usuarioPO.getUsername());
+			if (projetos != null) {
+				for (ProjetoPO projeto : projetos) {
+					ProjetoResponseDTO responseDTO = new ProjetoResponseDTO();
+					responseDTO.setIdProjeto(projeto.getIdProjeto());
+					responseDTO.setNome(projeto.getNome());
+
+					Double horas = 0.0;
+					List<RegistroHorasProjetoPO> listHoras = new ArrayList<>();
+					if (usuarioPO.getAdmin().equalsIgnoreCase("S")) {
+						listHoras = registroHorasRepository.buscaHorasPorProjeto(projeto.getIdProjeto());
+					} else {
+						listHoras = registroHorasRepository.buscaMinhasHoras(usuarioPO.getIdUsuario(),
+								projeto.getIdProjeto());
 					}
+					if (listHoras.size() > 0) {
+						for (RegistroHorasProjetoPO registroHoras : listHoras) {
+
+							Double hs = 0.0;
+							try {
+								hs = registroHoras.getHoras();
+							} catch (Exception e) {
+
+							}
+							horas += hs;
+						}
+					}
+
+					responseDTO.setHoras(formatDouble(horas, 2));
+
+					lista.add(responseDTO);
 				}
-
-				responseDTO.setHoras(horas);
-
-				lista.add(responseDTO);
 			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw new ServiceException("Um erro ocorreu ao buscar os projetos!");
 		}
+
 		return ResponseEntity.status(HttpStatus.OK).body(lista);
 	}
 
 	@ApiOperation(value = "Registro de horas")
 	@PostMapping(value = "/registrohoras", produces = "application/json")
-	public ResponseEntity<?> registrarHoras(@Validated @RequestBody GravarHorasRequestDTO gravarHorasRequestDTO,
+	public ResponseEntity<?> registrarHoras(@Valid @RequestBody GravarHorasRequestDTO gravarHorasRequestDTO,
 			HttpServletRequest request) {
 
 		UsuarioPO usuarioPO = retornarUsuarioPO(request);
@@ -119,6 +131,7 @@ public class ProjetoResource {
 				return ResponseEntity.status(HttpStatus.CREATED).build();
 
 			} catch (Exception e) {
+				logger.error(e.getMessage());
 				throw new ServiceException("Um erro ocorreu ao gravar o registro de horas!");
 			}
 		} else {
@@ -127,19 +140,31 @@ public class ProjetoResource {
 
 	}
 
+	private Double formatDouble(Double valor, int decimal) {
+		BigDecimal bd = BigDecimal.valueOf(valor);
+		bd = bd.setScale(decimal, RoundingMode.HALF_UP);
+		return bd.doubleValue();
+	}
+
 	private Date converteData(String data) {
 		String formato = "dd/MM/yyyy";
 		try {
 			Date date = new SimpleDateFormat(formato).parse(data);
 			return date;
 		} catch (ParseException e) {
+			logger.error(e.getMessage());
 			throw new ServiceException("Um erro ocorreu ao converter a data!");
 		}
 	}
 
 	private UsuarioPO retornarUsuarioPO(HttpServletRequest request) {
-		String usuario = retornaUsuario(request);
-		return usuarioRepository.findNomeUsuario(usuario);
+		try {
+			String usuario = retornaUsuario(request);
+			return usuarioRepository.findNomeUsuario(usuario);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		throw new ServiceException("Um erro ocorreu ao buscar o usuario ");
 	}
 
 	private String retornaUsuario(HttpServletRequest request) {

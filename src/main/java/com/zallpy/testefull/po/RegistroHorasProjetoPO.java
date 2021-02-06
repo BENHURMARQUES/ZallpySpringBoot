@@ -49,7 +49,7 @@ public class RegistroHorasProjetoPO implements Serializable {
 	@JoinColumn(name = "id_projeto", updatable = false, insertable = false)
 	private ProjetoPO projetoPO;
 
-	@Column(name = "horas")
+	@Column(name = "horas", nullable = true)
 	private Double horas;
 
 	/**
@@ -150,5 +150,4 @@ public class RegistroHorasProjetoPO implements Serializable {
 		this.horas = horas;
 	}
 
-	
 }

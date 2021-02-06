@@ -51,20 +51,23 @@ public class LoginResource {
 
 		logger.info("######### LOGIN #########");
 
-		authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+		UsuarioPO usuarioPO =	authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
 		final String token = jwtTokenUtil.generateToken(userDetails);
-		return ResponseEntity.ok(new JwtResponse(token, userDetails.getUsername()));
+		
+		return ResponseEntity.ok(new JwtResponse(token, usuarioPO.getUsername()));
 
 	}
 
-	private void authenticate(String username, String password) throws Exception {
+	private UsuarioPO authenticate(String username, String password) throws Exception {
 		try {
 
 			UsuarioPO usuarioPO = usuarioRepository.findNomeUsuario(username);
 			if (usuarioPO != null) {
 				if (!PasswordUtils.verifyUserPassword(password, usuarioPO.getSenha(), "salt")) {
 					throw new ServiceException("USUARIO E/OU SENHA NAO CONFERE.");
+				} else {
+					return usuarioPO;
 				}
 			} else {
 				throw new ServiceException("USUARIO E/OU SENHA NAO CONFERE..");

@@ -19,7 +19,10 @@ import com.zallpy.testefull.po.RegistroHorasProjetoPO;
  */
 public interface RegistroHorasRepository extends CrudRepository<RegistroHorasProjetoPO, Long> {
 
-	@Query(value = "select * from registro_horas_projeto where id_projeto in (select id_projeto from usuarios_has_projeto where id_usuario = :idUsuario ) and id_projeto = :idProjeto ", nativeQuery = true)
+	@Query(value = "select * from registro_horas_projeto where id_projeto = :idProjeto and id_usuario = :idUsuario order by data ", nativeQuery = true)
 	List<RegistroHorasProjetoPO> buscaMinhasHoras(@Param("idUsuario") int idUsuario, @Param("idProjeto") int idProjeto);
+
+	@Query(value = "select * from registro_horas_projeto where id_projeto = :idProjeto order by data ", nativeQuery = true)
+	List<RegistroHorasProjetoPO> buscaHorasPorProjeto(@Param("idProjeto") int idProjeto);
 
 }

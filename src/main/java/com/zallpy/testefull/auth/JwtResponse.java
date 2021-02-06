@@ -17,6 +17,7 @@ public class JwtResponse implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
 	private final String jwttoken;
 	private final String nome;
 
@@ -32,5 +33,5 @@ public class JwtResponse implements Serializable {
 	public String getNome() {
 		return this.nome;
 	}
-
+	
 }

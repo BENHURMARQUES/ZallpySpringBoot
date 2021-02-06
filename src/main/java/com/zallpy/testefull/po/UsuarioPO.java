@@ -26,14 +26,14 @@ public class UsuarioPO implements Serializable {
 	@Column(name = "id_usuario")
 	private int idUsuario;
 
-	@Column(name = "nome")
-	private String nome;
-
 	@Column(name = "username")
 	private String username;
 
 	@Column(name = "senha")
 	private String senha;
+
+	@Column(name = "admin")
+	private String admin;
 
 	/**
 	 * @return the idUsuario
@@ -47,20 +47,6 @@ public class UsuarioPO implements Serializable {
 	 */
 	public void setIdUsuario(int idUsuario) {
 		this.idUsuario = idUsuario;
-	}
-
-	/**
-	 * @return the nome
-	 */
-	public String getNome() {
-		return nome;
-	}
-
-	/**
-	 * @param nome the nome to set
-	 */
-	public void setNome(String nome) {
-		this.nome = nome;
 	}
 
 	/**
@@ -91,5 +77,20 @@ public class UsuarioPO implements Serializable {
 		this.senha = senha;
 	}
 
+	/**
+	 * @return the admin
+	 */
+	public String getAdmin() {
+		return admin;
+	}
+
+	/**
+	 * @param admin the admin to set
+	 */
+	public void setAdmin(String admin) {
+		this.admin = admin;
+	}
+
 	
+
 }
